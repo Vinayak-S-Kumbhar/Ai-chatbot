@@ -5,6 +5,4 @@ import reactor.core.publisher.Flux;
 
 public interface AiService {
     String streamChat(String query, String chatId);
-
-
 }

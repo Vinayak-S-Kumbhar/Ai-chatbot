@@ -14,15 +14,6 @@ public class AiServiceImpl implements AiService {
 
     private final ChatClient chatClient;
 
-//    @Override
-//    public Flux<String> streamChat(String query, String chatId) {
-//        return chatClient
-//                .prompt(query)
-//                .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,chatId))
-//                .stream()
-//                .content();
-//    }
-
     @Override
     public String streamChat(String query, String chatId) {
         return chatClient
