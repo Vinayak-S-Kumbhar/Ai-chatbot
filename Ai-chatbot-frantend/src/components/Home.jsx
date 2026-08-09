@@ -15,12 +15,15 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import Sidebar from "./Sidebar";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [messages, setMessages] = useState([]); // { id, role: 'user' | 'model', text }
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const bottomRef = useRef(null);
+  const navigate = useNavigate();
 
   const hasStarted = messages.length > 0;
 
@@ -30,23 +33,40 @@ export default function Home() {
     }
   }, [messages, isThinking]);
 
+  useEffect(() => {
+    const navigation = performance.getEntriesByType("navigation")[0];
+
+    if (navigation?.type === "reload") {
+      sessionStorage.clear();
+    }
+  }, []);
+
   async function handleSend() {
+    let chatId = sessionStorage.getItem("chatId");
+    if (!chatId) {
+      chatId = crypto.randomUUID();
+      sessionStorage.setItem("chatId", chatId);
+    }
+
     const trimmed = input.trim();
     if (!trimmed) return;
     const userMsg = { id: Date.now(), role: "user", text: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
-    console.log(trimmed);
+    console.log(chatId);
 
     try {
       setIsThinking(true);
-      const response = await fetch(`http://localhost:8080/chat?q=${trimmed}`, {
-        method: "POST",
-        headers: {
-          chatId: "101",
+      const response = await fetch(
+        `http://localhost:8080/public/chat?q=${trimmed}`,
+        {
+          method: "POST",
+          headers: {
+            chatId: chatId,
+          },
         },
-      });
+      );
       const data = await response.text();
 
       console.log(data);
@@ -71,43 +91,40 @@ export default function Home() {
   };
 
   return (
-    <div className="relative h-screen w-full flex overflow-hidden bg-[#f7f7f8] text-gray-800">
-      {/* Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Main blue glow */}
-        <div className="absolute left-1/2 top-[58%] h-[900px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#cfe4ff]/90 blur-[170px]" />
-
-        {/* Top white glow */}
-        <div className="absolute left-1/2 top-[-180px] h-[700px] w-[1400px] -translate-x-1/2 rounded-full bg-white/90 blur-[140px]" />
-
-        {/* Left glow */}
-        <div className="absolute left-[-250px] top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full bg-white/70 blur-[170px]" />
-
-        {/* Right glow */}
-        <div className="absolute right-[-250px] top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full bg-white/70 blur-[170px]" />
-
-        {/* Bottom glow */}
-        <div className="absolute bottom-[-300px] left-1/2 h-[700px] w-[1200px] -translate-x-1/2 rounded-full bg-[#d9eaff]/80 blur-[200px]" />
-      </div>
-
+    <div className="flex h-screen overflow-hidden bg-[#f7f9fc]">
       {/* Sidebar */}
-      <aside className="w-16 flex flex-col items-center py-4 shrink-0">
-        <div className="mb-8 cursor-pointer transition-transform duration-300 hover:scale-110">
-          <img className="h-7 w-7" src={geminiLogo} />
-        </div>
-
-        <nav className="flex flex-col items-center gap-2">
-          <button className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-gray-100 hover:scale-105 bg-gray-100">
-            <HiOutlinePencilSquare size={20} />
-          </button>
-        </nav>
-      </aside>
+      <Sidebar setMessages={setMessages} />
 
       {/* Main */}
-      <main className="flex-1 flex flex-col relative">
+      <main className="relative flex-1 flex flex-col overflow-hidden">
+        <div className="flex justify-end pt-2 pr-2">
+          <button
+            className="z-10 w-30 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300"
+            onClick={() => navigate("/login")}
+          >
+            Sign Up
+          </button>
+        </div>
+        {/* Background (ONLY inside main) */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Main blue glow */}
+          <div className="absolute left-1/2 top-[58%] h-[900px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#cfe4ff]/90 blur-[170px]" />
+
+          {/* Top white glow */}
+          <div className="absolute left-1/2 top-[-180px] h-[700px] w-[1400px] -translate-x-1/2 rounded-full bg-white/90 blur-[140px]" />
+
+          {/* Left glow */}
+          <div className="absolute left-[-250px] top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full bg-white/70 blur-[170px]" />
+
+          {/* Right glow */}
+          <div className="absolute right-[-250px] top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full bg-white/70 blur-[170px]" />
+
+          {/* Bottom glow */}
+          <div className="absolute bottom-[-300px] left-1/2 h-[700px] w-[1200px] -translate-x-1/2 rounded-full bg-[#d9eaff]/80 blur-[200px]" />
+        </div>
         {/* Empty state */}
         {!hasStarted && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 animate-fade-in">
+          <div className="z-10 flex-1 flex flex-col items-center justify-center px-6 animate-fade-in">
             <h1 className="text-4xl font-normal text-gray-700 mb-8 text-center">
               What should we focus on?
             </h1>
@@ -151,16 +168,16 @@ export default function Home() {
                   msg.role === "user" ? (
                     <div
                       key={msg.id}
-                      className="flex justify-end animate-slide-up"
+                      className="flex justify-end animate-slide-up z-10"
                     >
-                      <div className="bg-gray-100 rounded-3xl px-5 py-3 max-w-lg text-[15px] leading-relaxed">
+                      <div className="bg-gray-100 rounded-3xl px-5 py-3 max-w-lg text-[15px] leading-relaxed z-10">
                         {msg.text}
                       </div>
                     </div>
                   ) : (
                     <div
                       key={msg.id}
-                      className="flex flex-col gap-2 animate-slide-up"
+                      className="flex flex-col gap-2 animate-slide-up z-10"
                     >
                       <div className="prose prose-slate max-w-none dark:prose-invert">
                         <ReactMarkdown
@@ -217,7 +234,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="px-6 pb-2 shrink-0">
+            <div className="z-10 px-6 pb-2 shrink-0">
               <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-2 bg-white border border-gray-200 shadow-sm hover:shadow-md focus-within:shadow-md rounded-full px-3 py-2.5 transition-shadow duration-200">
                   <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200 shrink-0">
