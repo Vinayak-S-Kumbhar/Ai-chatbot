@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/public")
+//@RequestMapping("/public")
 @CrossOrigin(value = "http://localhost:5173/")
 public class AiControler {
     private final AiService aiService;

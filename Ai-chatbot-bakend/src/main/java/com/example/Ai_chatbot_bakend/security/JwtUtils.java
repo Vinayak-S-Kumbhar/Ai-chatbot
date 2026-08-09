@@ -22,9 +22,13 @@ public class JwtUtils {
                 .setSubject(user.getEmail())
                 .claim("userid", user.getId())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24))
                 .signWith(key)
                 .compact();
+    }
+
+    public SecretKey getKey() {
+        return key;
     }
 
 }
