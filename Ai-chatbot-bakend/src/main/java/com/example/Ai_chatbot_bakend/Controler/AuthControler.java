@@ -6,14 +6,12 @@ import com.example.Ai_chatbot_bakend.Dto.SignUpDto;
 import com.example.Ai_chatbot_bakend.Service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/Auth")
+@CrossOrigin(value = "http://localhost:5173")
 public class AuthControler {
 
     private final AuthService authService;

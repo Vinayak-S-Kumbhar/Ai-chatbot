@@ -40,7 +40,7 @@ public class AuthServiceImpl implements AuthService {
                 new RuntimeException("user not found! Please Signup first"));
 
         if(!passwordEncoder.matches(loginDto.getPassword(),user.getPassword())){
-            throw new RuntimeException("Password not match");
+            throw new RuntimeException("Wrong password!");
         }
         String jwtSecretKey = jwtUtils.genrateToken(user);
         return new LoginResDto(user.getId(), jwtSecretKey);
