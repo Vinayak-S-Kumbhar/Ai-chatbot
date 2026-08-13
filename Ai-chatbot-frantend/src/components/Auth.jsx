@@ -6,10 +6,98 @@ import {
   HiOutlineEye,
   HiOutlineEyeSlash,
 } from "react-icons/hi2";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Auth() {
   const [login, setLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfPassword, setShowConfPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const [userData, setUserData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPass: "",
+  });
+
+  const initializeValue = (key, vale) => {
+    setUserData((prev) => ({ ...prev, [key]: vale }));
+  };
+
+  const loginfun = async (e) => {
+    e.preventDefault();
+
+    try {
+      const responce = await fetch("http://localhost:8080/Auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          password: userData.password,
+        }),
+      });
+      const data = await responce.json();
+
+      if (!responce.ok) {
+        toast.error(data.message || "login fiald");
+        return;
+      }
+
+      cookieStore.set("userId", data.id);
+      cookieStore.set("accessToken", data.secretKey);
+      navigate("/");
+    } catch (error) {
+      toast.error(error.message || "someting went wrong");
+    }
+  };
+
+  const signUpfun = async (e) => {
+    e.preventDefault();
+
+    if (userData.password !== userData.confirmPass) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8080/Auth/signUp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: userData.username,
+          email: userData.email,
+          password: userData.password,
+        }),
+      });
+
+      const text = await response.text();
+
+      // Convert JSON string into JavaScript object
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+
+      if (!response.ok) {
+        toast.error(data.message || "Signup failed");
+        return;
+      }
+
+      toast.success(data.message || "Signup successful");
+      setLogin(true);
+    } catch (err) {
+      toast.error(err.message || "Something went wrong");
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-50 flex items-center justify-center px-5">
@@ -56,6 +144,11 @@ export default function Auth() {
                     placeholder="Email"
                     className="w-full rounded-xl border border-gray-200 bg-white/70 py-3 pl-12 pr-4 outline-none focus:border-blue-500"
                     required
+                    value={userData.email}
+                    onChange={(e) => {
+                      console.log(e);
+                      initializeValue("email", e.target.value);
+                    }}
                   />
                 </div>
                 <div className="relative">
@@ -69,6 +162,10 @@ export default function Auth() {
                     placeholder="Password"
                     className="w-full rounded-xl border border-gray-200 bg-white/70 py-3 pl-12 pr-12 outline-none focus:border-blue-500"
                     required
+                    value={userData.password}
+                    onChange={(e) =>
+                      initializeValue("password", e.target.value)
+                    }
                   />
 
                   <button
@@ -84,7 +181,10 @@ export default function Auth() {
                   </button>
                 </div>
 
-                <button className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3 font-semibold text-white hover:scale-[1.02] active:scale-95 transition">
+                <button
+                  className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3 font-semibold text-white hover:scale-[1.02] active:scale-95 transition"
+                  onClick={(e) => loginfun(e)}
+                >
                   Login
                 </button>
 
@@ -117,6 +217,9 @@ export default function Auth() {
                     placeholder="Full Name"
                     className="w-full rounded-xl border border-gray-200 bg-white/70 py-3 pl-12 pr-4 outline-none focus:border-blue-500"
                     required
+                    onChange={(e) =>
+                      initializeValue("username", e.target.value)
+                    }
                   />
                 </div>
 
@@ -131,6 +234,7 @@ export default function Auth() {
                     placeholder="Email"
                     className="w-full rounded-xl border border-gray-200 bg-white/70 py-3 pl-12 pr-4 outline-none focus:border-blue-500"
                     required
+                    onChange={(e) => initializeValue("email", e.target.value)}
                   />
                 </div>
 
@@ -145,6 +249,9 @@ export default function Auth() {
                     placeholder="Password"
                     className="w-full rounded-xl border border-gray-200 bg-white/70 py-3 pl-12 pr-12 outline-none focus:border-blue-500"
                     required
+                    onChange={(e) =>
+                      initializeValue("password", e.target.value)
+                    }
                   />
 
                   <button
@@ -167,14 +274,31 @@ export default function Auth() {
                   />
 
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showConfPassword ? "text" : "password"}
                     placeholder="Confirm Password"
                     className="w-full rounded-xl border border-gray-200 bg-white/70 py-3 pl-12 pr-12 outline-none focus:border-blue-500"
                     required
+                    onChange={(e) =>
+                      initializeValue("confirmPass", e.target.value)
+                    }
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfPassword(!showConfPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                  >
+                    {showConfPassword ? (
+                      <HiOutlineEyeSlash size={20} />
+                    ) : (
+                      <HiOutlineEye size={20} />
+                    )}
+                  </button>
                 </div>
 
-                <button className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3 font-semibold text-white hover:scale-[1.02] active:scale-95 transition">
+                <button
+                  className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3 font-semibold text-white hover:scale-[1.02] active:scale-95 transition"
+                  onClick={(e) => signUpfun(e)}
+                >
                   Create Account
                 </button>
 
