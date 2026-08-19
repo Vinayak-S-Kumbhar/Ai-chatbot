@@ -13,6 +13,7 @@ export default function Auth() {
   const [login, setLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfPassword, setShowConfPassword] = useState(false);
+  const [loading, setLoading] = useState(false); //loading state for sign up and login
   const navigate = useNavigate();
 
   const [userData, setUserData] = useState({
@@ -29,6 +30,7 @@ export default function Auth() {
   const loginfun = async (e) => {
     e.preventDefault();
 
+    setLoading(true);
     try {
       const responce = await fetch("http://localhost:8080/Auth/login", {
         method: "POST",
@@ -47,11 +49,13 @@ export default function Auth() {
         return;
       }
 
-      cookieStore.set("userId", data.id);
-      cookieStore.set("accessToken", data.secretKey);
+      localStorage.setItem("userId", data.id);
+      localStorage.setItem("accessToken", data.secretKey);
       navigate("/");
     } catch (error) {
       toast.error(error.message || "someting went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,7 +66,7 @@ export default function Auth() {
       toast.error("Passwords do not match");
       return;
     }
-
+    setLoading(true);
     try {
       const response = await fetch("http://localhost:8080/Auth/signUp", {
         method: "POST",
@@ -87,8 +91,17 @@ export default function Auth() {
         data = { message: text };
       }
 
+      console.log(data);
+      console.log(response);
+
       if (!response.ok) {
-        toast.error(data.message || "Signup failed");
+        toast.error(
+          data.message ||
+            data.email ||
+            data.password ||
+            data.username ||
+            "Signup failed",
+        );
         return;
       }
 
@@ -96,6 +109,8 @@ export default function Auth() {
       setLogin(true);
     } catch (err) {
       toast.error(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -184,8 +199,9 @@ export default function Auth() {
                 <button
                   className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3 font-semibold text-white hover:scale-[1.02] active:scale-95 transition"
                   onClick={(e) => loginfun(e)}
+                  disabled={loading}
                 >
-                  Login
+                  {loading ? "Loging..." : "Login"}
                 </button>
 
                 {/* <div className="relative py-2">
@@ -298,8 +314,9 @@ export default function Auth() {
                 <button
                   className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3 font-semibold text-white hover:scale-[1.02] active:scale-95 transition"
                   onClick={(e) => signUpfun(e)}
+                  disabled={loading}
                 >
-                  Create Account
+                  {loading ? "Creting account..." : "Create Account"}
                 </button>
 
                 {/* <div className="relative py-2">
