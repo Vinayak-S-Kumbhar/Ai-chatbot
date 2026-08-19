@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -23,11 +25,11 @@ public class AuthServiceImpl implements AuthService {
     public String signUp(SignUpDto signUpDto) {
         User user = userRepository.findByEmail(signUpDto.getEmail()).orElse(null);
 
-        if(user != null){
-          throw new RuntimeException("User Exist with this Email! Please login");
+        if(user != null) {
+            throw new RuntimeException("User Exist with this Email! Please login");
         }
-
-        User newUser = new User(signUpDto.getUsername(),signUpDto.getEmail(),passwordEncoder.encode(signUpDto.getPassword()));
+        String userId = UUID.randomUUID().toString();
+        User newUser = new User(userId,signUpDto.getUsername(),signUpDto.getEmail(),passwordEncoder.encode(signUpDto.getPassword()));
 
         User savedUser = userRepository.save(newUser);
         return "Signup Successfully";
