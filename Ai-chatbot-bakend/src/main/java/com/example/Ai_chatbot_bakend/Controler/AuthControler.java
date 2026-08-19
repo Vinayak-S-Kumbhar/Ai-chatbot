@@ -4,6 +4,7 @@ import com.example.Ai_chatbot_bakend.Dto.LoginDto;
 import com.example.Ai_chatbot_bakend.Dto.LoginResDto;
 import com.example.Ai_chatbot_bakend.Dto.SignUpDto;
 import com.example.Ai_chatbot_bakend.Service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class AuthControler {
     private final AuthService authService;
 
     @PostMapping("/signUp")
-    public ResponseEntity<String> signUp(@RequestBody SignUpDto signUpDto){
+    public ResponseEntity<String> signUp(@Valid @RequestBody SignUpDto signUpDto){
         return ResponseEntity.ok(authService.signUp(signUpDto));
     }
 
