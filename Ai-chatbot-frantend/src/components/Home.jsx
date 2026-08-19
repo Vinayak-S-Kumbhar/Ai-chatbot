@@ -22,8 +22,10 @@ export default function Home() {
   const [messages, setMessages] = useState([]); // { id, role: 'user' | 'model', text }
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const bottomRef = useRef(null);
   const navigate = useNavigate();
+  const userId = localStorage.getItem("userId");
 
   const hasStarted = messages.length > 0;
 
@@ -32,14 +34,6 @@ export default function Home() {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isThinking]);
-
-  useEffect(() => {
-    const navigation = performance.getEntriesByType("navigation")[0];
-
-    if (navigation?.type === "reload") {
-      sessionStorage.clear();
-    }
-  }, []);
 
   async function handleSend() {
     let chatId = sessionStorage.getItem("chatId");
@@ -50,16 +44,14 @@ export default function Home() {
 
     const trimmed = input.trim();
     if (!trimmed) return;
-    const userMsg = { id: Date.now(), role: "user", text: trimmed };
+    const userMsg = { id: Date.now(), type: "USER", content: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-
-    console.log(chatId);
 
     try {
       setIsThinking(true);
       const response = await fetch(
-        `http://localhost:8080/public/chat?q=${trimmed}`,
+        `http://localhost:8080/public/chat?q=${trimmed}&userId=${userId}`,
         {
           method: "POST",
           headers: {
@@ -72,8 +64,8 @@ export default function Home() {
       console.log(data);
       const reply = {
         id: Date.now() + 1,
-        role: "model",
-        text: data,
+        type: "ASSISTANT",
+        content: data,
       };
       setMessages((prev) => [...prev, reply]); // Save API response
     } catch (error) {
@@ -90,6 +82,20 @@ export default function Home() {
     }
   };
 
+  const handleCopy = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+
+      setCopiedId(id);
+
+      setTimeout(() => {
+        setCopiedId(null);
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#f7f9fc]">
       {/* Sidebar */}
@@ -97,14 +103,16 @@ export default function Home() {
 
       {/* Main */}
       <main className="relative flex-1 flex flex-col overflow-hidden">
-        <div className="flex justify-end pt-2 pr-2">
-          <button
-            className="z-10 w-30 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300"
-            onClick={() => navigate("/login")}
-          >
-            Sign Up
-          </button>
-        </div>
+        {!userId && (
+          <div className="flex justify-end pt-2 pr-2">
+            <button
+              className="z-10 w-30 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300"
+              onClick={() => navigate("/login")}
+            >
+              Sign Up
+            </button>
+          </div>
+        )}
         {/* Background (ONLY inside main) */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Main blue glow */}
@@ -165,13 +173,13 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto px-6">
               <div className="max-w-3xl mx-auto py-6 flex flex-col gap-8">
                 {messages.map((msg) =>
-                  msg.role === "user" ? (
+                  msg.type === "USER" ? (
                     <div
                       key={msg.id}
                       className="flex justify-end animate-slide-up z-10"
                     >
                       <div className="bg-gray-100 rounded-3xl px-5 py-3 max-w-lg text-[15px] leading-relaxed z-10">
-                        {msg.text}
+                        {msg.content}
                       </div>
                     </div>
                   ) : (
@@ -202,7 +210,7 @@ export default function Home() {
                             },
                           }}
                         >
-                          {msg.text}
+                          {msg.content}
                         </ReactMarkdown>
                       </div>
                       <div className="flex items-center gap-1 text-gray-500">
@@ -215,8 +223,16 @@ export default function Home() {
                         <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200 active:scale-90">
                           <HiOutlineArrowPath size={16} />
                         </button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200 active:scale-90">
-                          <HiOutlineClipboard size={16} />
+                        <button
+                          onClick={() => handleCopy(msg.content, msg.id)}
+                          title={copiedId === msg.id ? "Copied!" : "Copy"}
+                          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200 active:scale-90"
+                        >
+                          {copiedId === msg.id ? (
+                            <span className="text-green-600 font-bold">✓</span>
+                          ) : (
+                            <HiOutlineClipboard size={16} />
+                          )}
                         </button>
                       </div>
                     </div>
